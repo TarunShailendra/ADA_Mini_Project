@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Parking System</title>
+
+    <!-- Bootstrap -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+
+        /* GREEDY MODAL */
+
+        .greedy-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .greedy-modal-overlay.show {
+            display: flex;
+        }
+
+        .greedy-modal {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 32px;
+            width: 90%;
+            max-width: 540px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        .greedy-modal h5 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #06b6d4;
+            margin-bottom: 4px;
+        }
+
+        .greedy-modal .subtitle-text {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .viz-slot-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .viz-slot {
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .viz-slot.free {
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .viz-slot.occupied {
+            background: #334155;
+            color: #64748b;
+        }
+
+        .viz-slot.chosen {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            color: white;
+            animation: pulse 1s infinite;
+            transform: scale(1.15);
+            box-shadow: 0 0 18px rgba(6, 182, 212, 0.7);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 18px rgba(6, 182, 212, 0.7); }
+            50%       { box-shadow: 0 0 30px rgba(6, 182, 212, 1);   }
+        }
+
+        .viz-slot .arrow-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            color: #06b6d4;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .greedy-steps {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+
+        .greedy-steps p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            padding: 5px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .greedy-steps p:last-child {
+            border-bottom: none;
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .greedy-steps span.step-num {
+            color: #06b6d4;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .close-viz-btn {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            padding: 10px 28px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-viz-btn:hover {
+            transform: scale(1.03);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<!-- =====================================================
+     GREEDY VISUALIZATION MODAL
+     Only shown on successful park (alert_type == 'success')
+     and NOT on search results
+====================================================== -->
+
+{% if alert_type == 'success' and 'allocated Slot' in message %}
+
+<div class="greedy-modal-overlay show" id="greedyOverlay">
+
+    <div class="greedy-modal">
+
+        <h5>Greedy Allocation — How it worked</h5>
+
+        <p class="subtitle-text">
+            Scanned slots left to right, picked the first free one instantly.
+        </p>
+
+        <!-- SLOT GRID -->
+
+        <div class="viz-slot-grid">
+
+            {% set allocated = message.split('Slot ')[-1] %}
+
+            {% for slot in all_slots %}
+
+                {% if slot == allocated %}
+
+                    <div class="viz-slot chosen">
+                        {{ slot }}
+                        <span class="arrow-label">picked</span>
+                    </div>
+
+                {% elif slot in available_slots %}
+
+                    <div class="viz-slot free">{{ slot }}</div>
+
+                {% else %}
+
+                    <div class="viz-slot occupied">{{ slot }}</div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+        <!-- STEPS -->
+
+        <div class="greedy-steps">
+
+            <p>
+                <span class="step-num">Step 1</span>
+                Scan <code>available_slots[]</code> from index 0
+            </p>
+
+            <p>
+                <span class="step-num">Step 2</span>
+                First free slot found —
+                <strong style="color:white">{{ message.split('Slot ')[-1] }}</strong>
+                — allocate immediately, stop scanning
+            </p>
+
+            <p>
+                <span class="step-num">Step 3</span>
+                {{ message }}
+            </p>
+
+        </div>
+
+        <button class="close-viz-btn" onclick="closeGreedy()">
+            Got it
+        </button>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<div class="container py-5">
+
+    <!-- HEADER -->
+
+    <div class="text-center mb-5">
+
+        <h1 class="main-title">
+            Smart Parking Lot System
+        </h1>
+
+        {% if message %}
+
+        <div class="alert alert-{{ alert_type }} alert-dismissible fade show mt-4"
+             role="alert">
+
+            <strong>{{ message }}</strong>
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- LEFT SIDE -->
+
+        <div class="col-lg-5">
+
+            <!-- PARK VEHICLE -->
+
+            <div class="custom-card mb-4">
+
+                <h3 class="section-title">
+                    Park Vehicle
+                </h3>
+
+                <form action="/park" method="POST">
+
+                    <input
+                        type="text"
+                        name="vehicle_number"
+                        class="form-control custom-input mb-3"
+                        placeholder="Enter Vehicle Number"
+                        required
+                    >
+
+                    <button class="btn custom-btn w-100">
+                        Allocate Slot
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- SEARCH VEHICLE -->
+
+            <div class="custom-card mb-4">
+
+                <h3 class="section-title">
+                    Search Vehicle
+                </h3>
+
+                <form action="/search" method="POST">
+
+                    <input
+                        type="text"
+                        name="vehicle_number"
+                        class="form-control custom-input mb-3"
+                        placeholder="Search Vehicle Number"
+                        required
+                    >
+
+                    <button class="btn search-btn w-100">
+                        Search
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- DYNAMIC PRICE -->
+
+            <div class="custom-card">
+
+                <h3 class="section-title">
+                    Dynamic Parking Price
+                </h3>
+
+                <div class="price-box">
+                    Rs. {{ parking_price }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+
+        <div class="col-lg-7">
+
+            <!-- SLOT STATUS -->
+
+            <div class="custom-card mb-4">
+
+                <div class="d-flex
+                            justify-content-between
+                            align-items-center
+                            mb-3">
+
+                    <h3 class="section-title">
+                        Parking Slots
+                    </h3>
+
+                    <span class="badge bg-success fs-6">
+                        {{ available_slots|length }} Free
+                    </span>
+
+                </div>
+
+                <div class="slot-container">
+
+                    {% for slot in all_slots %}
+
+                        {% if slot in available_slots %}
+
+                            <div class="slot-box free-slot">
+                                {{ slot }}
+                            </div>
+
+                        {% else %}
+
+                            <div class="slot-box occupied-slot">
+                                {{ slot }}
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+            <!-- PARKED VEHICLES -->
+
+            <div class="custom-card mb-4">
+
+                <div class="d-flex
+                            justify-content-between
+                            align-items-center
+                            mb-4">
+
+                    <h3 class="section-title">
+                        Parked Vehicles
+                    </h3>
+
+                    <span class="badge bg-primary fs-6">
+                        {{ parked_vehicles|length }} Parked
+                    </span>
+
+                </div>
+
+                {% if parked_vehicles %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-dark table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+                                <th>Vehicle Number</th>
+                                <th>Slot</th>
+                                <th>Action</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for vehicle, slot in parked_vehicles.items() %}
+
+                            <tr>
+
+                                <td>{{ vehicle }}</td>
+
+                                <td>
+
+                                    <span class="badge bg-info text-dark">
+                                        {{ slot }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <a href="/remove/{{ vehicle }}"
+                                       class="btn btn-danger btn-sm">
+
+                                        Remove
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% else %}
+
+                <p class="empty-text">
+                    No vehicles parked currently.
+                </p>
+
+                {% endif %}
+
+            </div>
+
+            <!-- WAITING QUEUE -->
+
+            <div class="custom-card">
+
+                <div class="d-flex
+                            justify-content-between
+                            align-items-center
+                            mb-4">
+
+                    <h3 class="section-title">
+                        Waiting Queue
+                    </h3>
+
+                    <span class="badge bg-warning text-dark fs-6">
+                        {{ waiting_queue|length }} Waiting
+                    </span>
+
+                </div>
+
+                {% if waiting_queue %}
+
+                <div class="queue-container">
+
+                    {% for vehicle in waiting_queue %}
+
+                    <div class="queue-box">
+                        {{ loop.index }}. {{ vehicle }}
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                {% else %}
+
+                <p class="empty-text">
+                    No vehicles in waiting queue.
+                </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function closeGreedy() {
+        document.getElementById('greedyOverlay').classList.remove('show');
+    }
+
+    const overlay = document.getElementById('greedyOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeGreedy();
+        });
+    }
+</script>
+
+</body>
+
+</html>

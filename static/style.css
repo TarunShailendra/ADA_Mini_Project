@@ -1,0 +1,212 @@
+body {
+    background: #0f172a;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+}
+
+/* HEADER */
+
+.main-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+/* CARDS */
+
+.custom-card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.3);
+    transition: 0.3s ease;
+}
+
+.custom-card:hover {
+    transform: translateY(-4px);
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* INPUTS */
+
+.custom-input {
+    background: #334155;
+    border: none;
+    color: white;
+    height: 50px;
+    border-radius: 12px;
+}
+
+.custom-input::placeholder {
+    color: #cbd5e1;
+}
+
+.custom-input:focus {
+    background: #475569;
+    color: white;
+    box-shadow: none;
+    border: none;
+}
+
+/* BUTTONS */
+
+.custom-btn {
+    background: linear-gradient(45deg, #06b6d4, #3b82f6);
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: white;
+    transition: 0.3s ease;
+}
+
+.custom-btn:hover {
+    transform: scale(1.02);
+    color: white;
+}
+
+.search-btn {
+    background: linear-gradient(45deg, #22c55e, #16a34a);
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    transition: 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: scale(1.02);
+    color: white;
+}
+
+/* SLOT DISPLAY */
+
+.slot-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.slot-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: 0.3s ease;
+}
+
+.slot-box:hover {
+    transform: scale(1.08);
+}
+
+.free-slot {
+    background: linear-gradient(45deg, #22c55e, #16a34a);
+}
+
+.occupied-slot {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+}
+
+/* WAITING QUEUE */
+
+.queue-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.queue-box {
+    background: #f59e0b;
+    color: black;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* PRICING */
+
+.price-box {
+    background: linear-gradient(45deg, #f97316, #ef4444);
+    padding: 20px;
+    text-align: center;
+    border-radius: 15px;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* EMPTY STATES */
+
+.empty-text {
+    color: #94a3b8;
+    margin-bottom: 0;
+}
+
+/* TABLE */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* ALERT */
+
+.alert {
+    border-radius: 14px;
+    font-weight: 500;
+    border: none;
+}
+
+/* BADGES */
+
+.badge {
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    .main-title {
+        font-size: 2rem;
+    }
+
+    .custom-card {
+        padding: 20px;
+    }
+
+    .slot-box {
+        width: 60px;
+        height: 60px;
+        font-size: 1rem;
+    }
+
+    .price-box {
+        font-size: 1.5rem;
+    }
+}
